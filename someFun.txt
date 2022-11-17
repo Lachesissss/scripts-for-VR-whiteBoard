@@ -1,0 +1,69 @@
+private void DrawTexturesToRT(List<Vector2> writingPosList, Vector2Int drawTextureSize, Color colorOnTrackedRT)
+    {
+        drawTextureTemp = new Texture2D(drawTextureSize.x, drawTextureSize.y);
+        for (int i = 0; i < writingPosList.Count; i++)
+        {
+            DrawTextureToRenderTexture(drawTextureTemp,
+                                       1,
+                                       Mathf.FloorToInt(writingPosList[i].x * trackedRT.width),
+                                       Mathf.FloorToInt((1 - writingPosList[i].y) * trackedRT.height),
+                                       trackedRT, colorOnTrackedRT);
+        }
+    }
+
+public static void DrawTextureToRenderTexture(Texture2D src, float srcScale, int centerXOnDst, int centerYOnDst, RenderTexture rt, Color colorOnTrackedRT)
+    {
+        int srcX = 0;
+        int srcY = 0;
+        int scaledWidth = Mathf.FloorToInt(src.width * srcScale);
+        int scaledHeight = Mathf.FloorToInt(src.height * srcScale);
+        int srcWidth = scaledWidth;
+        int srcHeight = scaledHeight;
+
+        int dstX = centerXOnDst - scaledWidth / 2;
+        if (dstX < 0)
+        {
+            var delta = Mathf.Abs(dstX);
+            dstX = 0;
+            srcX = delta;
+            srcWidth -= delta;
+        }
+        else if (dstX >= rt.width)
+        {
+            return;
+        }
+
+        int dstY = centerYOnDst - scaledHeight / 2;
+        if (dstY < 0)
+        {
+            var delta = Mathf.Abs(dstY);
+            dstY = 0;
+            srcY = delta;
+            srcHeight -= delta;
+        }
+        else if (dstY >= rt.height)
+        {
+            return;
+        }
+
+        if (dstX + srcWidth >= rt.width)
+        {
+            var delta = (dstX + srcWidth) - rt.width;
+            srcWidth -= delta;
+        }
+        if (dstY + srcHeight >= rt.height)
+        {
+            var delta = (dstY + srcHeight) - rt.height;
+            srcHeight -= delta;
+        }
+
+        var old = RenderTexture.active;
+        RenderTexture.active = rt;
+        GL.PushMatrix();                                
+        GL.LoadPixelMatrix(0, rt.width, rt.height, 0);  
+        Rect srcRect = new Rect(0, 0, srcWidth / (float)scaledWidth, srcHeight / (float)scaledHeight);
+        Rect screenRect = new Rect(dstX, dstY, srcWidth, srcHeight);
+        Graphics.DrawTexture(screenRect, src, srcRect, 0, 0, 0, 0, colorOnTrackedRT);
+        GL.PopMatrix();
+        RenderTexture.active = old;
+    }
